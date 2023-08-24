@@ -1,4 +1,4 @@
-import { ActionPanel, Detail, List, Action } from "@raycast/api";
+import { ActionPanel, Detail, List, Action, Icon } from "@raycast/api";
 import { getLists, getItems } from "./hooks/bringAPI";
 
 import { useEffect, useMemo, useState } from "react";
@@ -75,7 +75,17 @@ export default function Command() {
   const [lists, loadingList] = getLists();
 
   return (
-    <List isLoading={loadingItems} navigationTitle="Search items">
+    <List
+      isLoading={loadingItems || loadingList}
+      navigationTitle="Search items"
+      searchBarAccessory={
+        <List.Dropdown tooltip="Select list" storeValue={true}>
+          {lists.map((list) => (
+            <List.Dropdown.Item key={list.listUuid} title={list.name} value={list.listUuid} icon={Icon.List}/>
+          ))}
+        </List.Dropdown>
+      }
+    >
       {items
         .sort((a, b) => a.name.localeCompare(b.name))
         .map((items) => (
@@ -85,7 +95,7 @@ export default function Command() {
             actions={
               <ActionPanel>
                 <Action.Push title="Show Details" target={<Detail markdown={`# ${items.name}`} />} />
-                {/* <Action title="Reload" onAction={() => getLists()} /> */}
+                {/* <Action title="Reload" onAction={() => Command()} /> */}
               </ActionPanel>
             }
           />
