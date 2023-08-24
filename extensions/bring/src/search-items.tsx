@@ -71,21 +71,25 @@ import { useEffect, useMemo, useState } from "react";
 // }
 
 export default function Command() {
+  const [items, loadingItems] = getItems();
   const [lists, loadingList] = getLists();
+
   return (
-    <List isLoading={loadingList} navigationTitle="Search items">
-      {lists.map((list) => (
-        <List.Item
-          key={list.listUuid}
-          title={list.name}
-          actions={
-            <ActionPanel>
-              <Action.Push title="Show Details" target={<Detail markdown={`# ${list.name}`} />} />
-              {/* <Action title="Reload" onAction={() => getLists()} /> */}
-            </ActionPanel>
-          }
-        />
-      ))}
+    <List isLoading={loadingItems} navigationTitle="Search items">
+      {items
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((items) => (
+          <List.Item
+            key={items.name}
+            title={items.name}
+            actions={
+              <ActionPanel>
+                <Action.Push title="Show Details" target={<Detail markdown={`# ${items.name}`} />} />
+                {/* <Action title="Reload" onAction={() => getLists()} /> */}
+              </ActionPanel>
+            }
+          />
+        ))}
     </List>
   );
 }

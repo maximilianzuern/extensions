@@ -31,7 +31,14 @@
     {
       "name": "userUUID",
       "title": "User UUID",
-      "description": "See the extension's README for instructions to obtain the UUID",
+      "description": "See the extension's README for instructions to obtain the userUUID",
+      "type": "textfield",
+      "required": true
+    },
+    {
+      "name": "listUUID",
+      "title": "List UUID",
+      "description": "See the extension's README for instructions to obtain the listUUID",
       "type": "textfield",
       "required": true
     }
