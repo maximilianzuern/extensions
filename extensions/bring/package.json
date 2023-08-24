@@ -13,14 +13,32 @@
   "license": "MIT",
   "commands": [
     {
-      "name": "index",
-      "title": "Manage items",
+      "name": "search-items",
+      "title": "Manage list",
       "description": "Manging your shopping list.",
       "mode": "view"
     }
   ],
+  "preferences": [
+    {
+      "name": "personalAccessToken",
+      "title": "Personal Access Token",
+      "placeholder": "Look it up on https://web.getbring.com/",
+      "description": "See the extension's README for instructions to obtain the personal access token",
+      "type": "textfield",
+      "required": true
+    },
+    {
+      "name": "userUUID",
+      "title": "User UUID",
+      "description": "See the extension's README for instructions to obtain the UUID",
+      "type": "textfield",
+      "required": true
+    }
+  ],
   "dependencies": {
-    "@raycast/api": "^1.57.0"
+    "@raycast/api": "^1.57.0",
+    "axios": "^1.4.0"
   },
   "devDependencies": {
     "@raycast/eslint-config": "1.0.5",
