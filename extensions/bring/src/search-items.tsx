@@ -1,7 +1,7 @@
 import { ActionPanel, Detail, List, Action, Icon, Color } from "@raycast/api";
 import { getLists, getItems, updateItem } from "./hooks/bringAPI";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 export default function Command() {
   const [items, loadingItems] = getItems();
@@ -12,6 +12,8 @@ export default function Command() {
   const handleItem = (itemName: string, itemRecently: string) => {
     updateItem(itemName, itemRecently);
   };
+
+  const capitalizedSearchText = searchText.replace(/^\w/, (c) => c.toUpperCase());
 
   return (
     <List
@@ -57,7 +59,7 @@ export default function Command() {
         <List.Section title="Add Item">
           <List.Item
             key={searchText}
-            title={searchText}
+            title={capitalizedSearchText}
             icon={{ source: Icon.Plus, tintColor: Color.Green }}
             actions={
               <ActionPanel>
@@ -65,7 +67,7 @@ export default function Command() {
                   title="Add Item"
                   icon={Icon.PlusCircle}
                   onAction={() => {
-                    handleItem(searchText, "");
+                    handleItem(capitalizedSearchText, "");
                   }}
                 />
               </ActionPanel>

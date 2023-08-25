@@ -70,11 +70,11 @@ export function getItems(): [PurchaseItem[], boolean] {
 export async function updateItem(itemName: string, itemRecently: string): Promise<void> {
   const entries = `&purchase=${itemName}&recently=${itemRecently}`;
 
-  await showToast(Toast.Style.Animated, "Updating item...");
+  await showToast(Toast.Style.Animated, `Updating ${itemName || itemRecently}...`);
   try {
     const response = await axios.put(`https://api.getbring.com/rest/v2/bringlists/${listUUID}`, entries, OPTIONS);
-    showToast(Toast.Style.Success, `Updating successfull!`);
+    showToast(Toast.Style.Success, `Updating ${itemName || itemRecently} successfull!`);
   } catch (error) {
-    showToast({ style: Toast.Style.Failure, title: "Error while updating items", message: String(error) });
+    showToast({ style: Toast.Style.Failure, title: `Error while updating ${itemName || itemRecently}`, message: String(error) });
   }
 }
