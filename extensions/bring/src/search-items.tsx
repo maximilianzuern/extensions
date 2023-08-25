@@ -1,105 +1,78 @@
-import { ActionPanel, Detail, List, Action, Icon } from "@raycast/api";
-import { getLists, getItems } from "./hooks/bringAPI";
+import { ActionPanel, Detail, List, Action, Icon, Color } from "@raycast/api";
+import { getLists, getItems, updateItem } from "./hooks/bringAPI";
 
 import { useEffect, useMemo, useState } from "react";
-
-// type DropdownList = "OPEN" | "DONE";
-
-// type ListDropdownProps = {
-//   lists: any[];
-//   onListChange: (newValue: DropdownList) => void;
-// };
-
-// const ListDropdown = (props: ListDropdownProps) => {
-//   const { lists, onListChange } = props;
-
-//   return (
-//     <List.Dropdown
-//       tooltip="Select List"
-//       storeValue={true}
-//       onChange={(value) => onListChange(value as DropdownList)}
-//     >
-//       {lists.map((list) => (
-//         <List.Dropdown.Item key={list.listUuid} title={list.name} value={list.listUuid} />
-//       ))}
-//     </List.Dropdown>
-//   );
-// };
-
-// export default function Command() {
-//   const [lists, loadingList] = getLists();
-//   const [selectedListUuid, setSelectedListUuid] = useState<DropdownList | undefined>();
-//   const [items, loadingItems] = useState([]);
-
-//   useEffect(() => {
-//     if (lists.length > 0) {
-//       setSelectedListUuid(lists[0].listUuid);
-//     }
-//   }, [lists]);
-
-//   useEffect(() => {
-//     if (selectedListUuid) {
-//       const [items, loadingItems] = getItems(selectedListUuid);
-//       setItems(items);
-//       setLoadingItems(loadingItems);
-//     }
-//   }, [selectedListUuid]);
-
-//   return (
-//     <List
-//       isLoading={loadingList}
-//       navigationTitle="Search Items"
-//       searchBarPlaceholder="Seach items"
-//       searchBarAccessory={
-//         <ListDropdown lists={lists} onListChange={(listUuid) => setSelectedListUuid(listUuid)} />
-//       }
-//     >
-//       {lists.map((item) => (
-//         <List.Item
-//           key={item.name}
-//           title={item.name}
-//           actions={
-//             <ActionPanel>
-//               <Action.Push title="Show Details" target={<Detail markdown={`# ${item.name}`} />} />
-//               {/* <Action title="Reload" onAction={() => getLists()} /> */}
-//             </ActionPanel>
-//           }
-//         />
-//       ))}
-//     </List>
-//   );
-// }
 
 export default function Command() {
   const [items, loadingItems] = getItems();
   const [lists, loadingList] = getLists();
 
+  const [searchText, setSearchText] = useState("");
+
+  const handleItem = (itemName: string, itemRecently: string) => {
+    updateItem(itemName, itemRecently);
+  };
+
   return (
     <List
       isLoading={loadingItems || loadingList}
-      navigationTitle="Search items"
+      searchText={searchText}
+      onSearchTextChange={setSearchText}
+      filtering={true}
+      searchBarPlaceholder="Search or create item"
       searchBarAccessory={
         <List.Dropdown tooltip="Select list" storeValue={true}>
           {lists.map((list) => (
-            <List.Dropdown.Item key={list.listUuid} title={list.name} value={list.listUuid} icon={Icon.List}/>
+            <List.Dropdown.Item key={list.listUuid} title={list.name} value={list.listUuid} icon={Icon.List} />
           ))}
         </List.Dropdown>
       }
     >
-      {items
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map((items) => (
+      <List.Section title="Shopping List">
+        {items
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((items) => (
+            <List.Item
+              key={items.name}
+              title={items.name}
+              subtitle={items.specification}
+              actions={
+                <ActionPanel>
+                  <Action
+                    title="Delete Item"
+                    icon={Icon.XMarkCircle}
+                    style="destructive"
+                    onAction={() => {
+                      handleItem("", items.name);
+                    }}
+                  />
+                  {/* <Action.Push title="Show Details" target={<Detail markdown={`# ${items.name}: ${searchText}`} />} /> */}
+                  {/* <Action title="Reload" onAction={() => Command()} /> */}
+                </ActionPanel>
+              }
+            />
+          ))}
+      </List.Section>
+      {searchText.length > 0 && (
+        <List.Section title="Add Item">
           <List.Item
-            key={items.name}
-            title={items.name}
+            key={searchText}
+            title={searchText}
+            icon={{ source: Icon.Plus, tintColor: Color.Green }}
             actions={
               <ActionPanel>
-                <Action.Push title="Show Details" target={<Detail markdown={`# ${items.name}`} />} />
-                {/* <Action title="Reload" onAction={() => Command()} /> */}
+                <Action
+                  title="Add Item"
+                  icon={Icon.PlusCircle}
+                  onAction={() => {
+                    handleItem(searchText, "");
+                  }}
+                />
               </ActionPanel>
             }
           />
-        ))}
+        </List.Section>
+      )}
     </List>
   );
 }

@@ -6,7 +6,6 @@ import axios from "axios";
 import { List } from "../types/lists";
 import { PurchaseItem } from "../types/items";
 
-
 const { personalAccessToken } = getPreferenceValues();
 const { userUUID } = getPreferenceValues();
 const { listUUID } = getPreferenceValues();
@@ -44,48 +43,20 @@ export function getLists(): [List[], boolean] {
 }
 
 // get items from a list
-// export function getItems(listuuid: string): [PurchaseItem[], boolean] {
-//   const [items, setItems] = useState<PurchaseItem[]>([]);
-//   const [loadingItems, setLoadingItems] = useState<boolean>(true);
-  
-
-//   useEffect(() => {
-//     async function fetchItems() {
-//       try {
-//         const response = await axios.get(`https://api.getbring.com/rest/v2/bringlists/${listuuid}`, OPTIONS);
-//         setItems(response?.data?.lists || []);
-//         setLoadingItems(false);
-//       } catch (error) {
-//         console.error(error);
-//         setItems([]);
-//         setLoadingItems(false);
-//       }
-//     }
-
-//     fetchItems();
-//   }, [listuuid]);
-
-//   return [items, loadingItems];
-// }
-
 export function getItems(): [PurchaseItem[], boolean] {
   const [items, setItems] = useState<PurchaseItem[]>([]);
   const [loadingItems, setLoadingItems] = useState<boolean>(true);
-  
 
   useEffect(() => {
     async function fetchItems() {
-      await showToast(Toast.Style.Animated, "Loading items...");
       try {
         const response = await axios.get(`https://api.getbring.com/rest/v2/bringlists/${listUUID}`, OPTIONS);
         setItems(response?.data?.purchase || []);
         setLoadingItems(false);
-        showToast(Toast.Style.Success, `Loading successfully!`);
       } catch (error) {
         console.error(error);
         setItems([]);
         setLoadingItems(false);
-        showToast({ style: Toast.Style.Failure, title: "Error while loading items", message: String(error) });
       }
     }
 
@@ -93,4 +64,17 @@ export function getItems(): [PurchaseItem[], boolean] {
   }, []);
 
   return [items, loadingItems];
+}
+
+// update item
+export async function updateItem(itemName: string, itemRecently: string): Promise<void> {
+  const entries = `&purchase=${itemName}&recently=${itemRecently}`;
+
+  await showToast(Toast.Style.Animated, "Updating item...");
+  try {
+    const response = await axios.put(`https://api.getbring.com/rest/v2/bringlists/${listUUID}`, entries, OPTIONS);
+    showToast(Toast.Style.Success, `Updating successfull!`);
+  } catch (error) {
+    showToast({ style: Toast.Style.Failure, title: "Error while updating items", message: String(error) });
+  }
 }
