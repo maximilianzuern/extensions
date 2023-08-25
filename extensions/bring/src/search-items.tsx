@@ -1,19 +1,18 @@
-import { ActionPanel, Detail, List, Action, Icon, Color } from "@raycast/api";
+import { ActionPanel, List, Action, Icon, Color } from "@raycast/api";
 import { getLists, getItems, updateItem } from "./hooks/bringAPI";
 
 import { useMemo, useState } from "react";
+
+// make first letter of string uppercase
+function capitalizeFirstLetter(str: string): string {
+  return str.replace(/^\w/, (c) => c.toUpperCase());
+}
 
 export default function Command() {
   const [items, loadingItems] = getItems();
   const [lists, loadingList] = getLists();
 
   const [searchText, setSearchText] = useState("");
-
-  const handleItem = (itemName: string, itemRecently: string) => {
-    updateItem(itemName, itemRecently);
-  };
-
-  const capitalizedSearchText = searchText.replace(/^\w/, (c) => c.toUpperCase());
 
   return (
     <List
@@ -45,11 +44,9 @@ export default function Command() {
                     icon={Icon.XMarkCircle}
                     style="destructive"
                     onAction={() => {
-                      handleItem("", items.name);
+                      updateItem("", items.name);
                     }}
                   />
-                  {/* <Action.Push title="Show Details" target={<Detail markdown={`# ${items.name}: ${searchText}`} />} /> */}
-                  {/* <Action title="Reload" onAction={() => Command()} /> */}
                 </ActionPanel>
               }
             />
@@ -59,7 +56,7 @@ export default function Command() {
         <List.Section title="Add Item">
           <List.Item
             key={searchText}
-            title={capitalizedSearchText}
+            title={capitalizeFirstLetter(searchText)}
             icon={{ source: Icon.Plus, tintColor: Color.Green }}
             actions={
               <ActionPanel>
@@ -67,7 +64,7 @@ export default function Command() {
                   title="Add Item"
                   icon={Icon.PlusCircle}
                   onAction={() => {
-                    handleItem(capitalizedSearchText, "");
+                    updateItem(capitalizeFirstLetter(searchText), "");
                   }}
                 />
               </ActionPanel>

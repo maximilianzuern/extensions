@@ -10,7 +10,7 @@ const { personalAccessToken } = getPreferenceValues();
 const { userUUID } = getPreferenceValues();
 const { listUUID } = getPreferenceValues();
 
-// define header
+// define header whereby "X-BRING-API-KEY" is the key to reach web.getbring.com
 const OPTIONS = {
   headers: {
     "X-BRING-API-KEY": "cof4Nc6D8saplXjE3h3HXqHH8m7VU2i1Gs0g85Sp",
@@ -43,6 +43,28 @@ export function getLists(): [List[], boolean] {
 }
 
 // get items from a list
+// export function getItems(listUUID: string): [PurchaseItem[], boolean] {
+//   const [items, setItems] = useState<PurchaseItem[]>([]);
+//   const [loadingItems, setLoadingItems] = useState<boolean>(true);
+
+//   useEffect(() => {
+//     async function fetchItems() {
+//       try {
+//         const response = await axios.get(`https://api.getbring.com/rest/v2/bringlists/${listUUID}`, OPTIONS);
+//         setItems(response?.data?.purchase || []);
+//         setLoadingItems(false);
+//       } catch (error) {
+//         console.error(error);
+//         setItems([]);
+//         setLoadingItems(false);
+//       }
+//     }
+
+//     fetchItems();
+//   }, [listUUID]);
+
+//   return [items, loadingItems];
+// }
 export function getItems(): [PurchaseItem[], boolean] {
   const [items, setItems] = useState<PurchaseItem[]>([]);
   const [loadingItems, setLoadingItems] = useState<boolean>(true);
@@ -73,8 +95,12 @@ export async function updateItem(itemName: string, itemRecently: string): Promis
   await showToast(Toast.Style.Animated, `Updating ${itemName || itemRecently}...`);
   try {
     const response = await axios.put(`https://api.getbring.com/rest/v2/bringlists/${listUUID}`, entries, OPTIONS);
-    showToast(Toast.Style.Success, `Updating ${itemName || itemRecently} successfull!`);
+    showToast(Toast.Style.Success, `Updated ${itemName || itemRecently} successfully!`);
   } catch (error) {
-    showToast({ style: Toast.Style.Failure, title: `Error while updating ${itemName || itemRecently}`, message: String(error) });
+    showToast({
+      style: Toast.Style.Failure,
+      title: `Error while updating ${itemName || itemRecently}`,
+      message: String(error),
+    });
   }
 }
