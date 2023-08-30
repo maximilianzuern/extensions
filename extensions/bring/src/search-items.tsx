@@ -1,30 +1,53 @@
-import { ActionPanel, List, Action, Icon, Color } from "@raycast/api";
+import { ActionPanel, List, Action, Icon, Color, Toast, showToast, confirmAlert } from "@raycast/api";
 import { getLists, getItems, updateItem } from "./hooks/bringAPI";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 
 import { bringList } from "./types/lists";
 import { PurchaseItem } from "./types/items";
 
-// make first letter of string uppercase
 function capitalizeFirstLetter(str: string): string {
   return str.replace(/^\w/, (c) => c.toUpperCase());
 }
 
 // main function
 export default function Command() {
-  const [lists, loadingList] = getLists();
-  const [selectedList, setSelectedList] = useState<string>(lists.length > 0 ? lists[0].listUuid : "");
-  console.log("selectedList", selectedList); //DEBUG
+  const [searchText, setSearchText] = useState<string>("");
+  const [selectedList, setSelectedList] = useState<string>("");
 
-  const onListTypeChange = (selectedListUUID: string) => {
+  const onListTypeChange = useCallback((selectedListUUID: string) => {
     if (selectedListUUID) {
-    setSelectedList(selectedListUUID);
+      setSelectedList(selectedListUUID);
     }
-  };
+  }, []);
+  
+  const [lists, setLists] = useState<bringList[]>([]);
+  const [loadingList, setLoadingList] = useState<boolean>(true);
+  useEffect(() => {
+    async function fetchLists() {
+      setLoadingList(true);
+      const [fetchlists, fetchloadingList] = await getLists();
+      setLists(fetchlists);
+      setLoadingList(fetchloadingList);
+      setSelectedList(lists.length > 0 ? lists[0].listUuid : "");
+    }
+    
+    fetchLists();
+  }, []);
 
-  const [searchText, setSearchText] = useState("");
-  const [items, loadingItems] = getItems(selectedList);
+  const [items, setItems] = useState<PurchaseItem[]>([]);
+  const [loadingItems, setLoadingItems] = useState<boolean>(true);
+  useEffect(() => {
+    async function fetchItems(selectedList: string) {
+      if (selectedList) {
+        setLoadingItems(true);
+        const [fetchitems, fetchloadingItems] = await getItems(selectedList);
+        setItems(fetchitems);
+        setLoadingItems(fetchloadingItems);
+      }
+    }
+    fetchItems(selectedList);
+  }, [selectedList]);
 
   return (
     <List
@@ -33,7 +56,7 @@ export default function Command() {
       onSearchTextChange={setSearchText}
       filtering={true}
       searchBarPlaceholder="Search or create item"
-      searchBarAccessory={ 
+      searchBarAccessory={
         <List.Dropdown tooltip="Select list" storeValue={true} onChange={onListTypeChange} isLoading={loadingItems}>
           {lists.map((list) => (
             <List.Dropdown.Item key={list.listUuid} title={list.name} value={list.listUuid} icon={Icon.Receipt} />
@@ -54,7 +77,7 @@ export default function Command() {
                   <Action
                     title="Delete Item"
                     icon={Icon.XMarkCircle}
-                    style="destructive"
+                    style={Action.Style.Destructive}
                     onAction={() => {
                       updateItem("", items.name, selectedList);
                     }}
