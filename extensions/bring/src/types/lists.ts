@@ -1,9 +1,9 @@
-export interface List {
+export interface bringList {
     listUuid: string;
     name: string;
     theme: string;
 }
 
 export interface ListsResponse {
-    lists: List[];
+    lists: bringList[];
 }

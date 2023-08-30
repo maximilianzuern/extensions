@@ -14,7 +14,7 @@
   "commands": [
     {
       "name": "search-items",
-      "title": "Manage list",
+      "title": "Manage List",
       "description": "Manging your shopping list.",
       "mode": "view"
     }
