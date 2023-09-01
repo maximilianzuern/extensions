@@ -56,10 +56,10 @@ export default function Command() {
     if (memoizedTranslation.hasOwnProperty(listUuid)) {
       const translation = memoizedTranslation[listUuid];
       if (recently.length > 0 && Object.values(translation).includes(recently)) {
-        translatedRecently = Object.keys(translation).find(key => translation[key] === recently) ?? "";
+        translatedRecently = Object.keys(translation).find((key) => translation[key] === recently) ?? "";
       }
       if (purchase.length > 0 && Object.values(translation).includes(purchase)) {
-        translatedPurchase = Object.keys(translation).find(key => translation[key] === purchase) ?? "";
+        translatedPurchase = Object.keys(translation).find((key) => translation[key] === purchase) ?? "";
       }
     }
     updateItem(translatedPurchase, translatedRecently, listUuid);
@@ -123,7 +123,12 @@ export default function Command() {
       searchBarAccessory={
         <List.Dropdown tooltip="Select list" storeValue={true} onChange={onListTypeChange} isLoading={loadingList}>
           {lists.map((list) => (
-            <List.Dropdown.Item key={list.listUuid} title={list.name} value={list.listUuid} icon={Icon.Receipt} />
+            <List.Dropdown.Item
+              icon={Icon.Receipt}
+              key={list.listUuid}
+              value={list.listUuid}
+              title={list.name}
+            />
           ))}
         </List.Dropdown>
       }
