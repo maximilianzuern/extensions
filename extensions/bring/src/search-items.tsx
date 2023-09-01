@@ -40,7 +40,6 @@ async function getTranslation(list: bringList[]) {
   return translations;
 }
 
-// ---------------------------- MAIN -----------------------------
 export default function Command() {
   const [searchText, setSearchText] = useState<string>("");
   const [selectedList, setSelectedList] = useState<string>("");
