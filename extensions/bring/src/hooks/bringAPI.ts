@@ -5,6 +5,8 @@ import axios from "axios";
 
 import { bringList } from "../types/lists";
 import { PurchaseItem } from "../types/items";
+import { GetUserSettingsResponse } from "../types/bringusersettings";
+import { type } from "os";
 
 const { personalAccessToken } = getPreferenceValues();
 if (!personalAccessToken) {
@@ -23,6 +25,56 @@ const OPTIONS = {
     Authorization: `Bearer ${personalAccessToken}`,
   },
 };
+
+// ---------------------------------- get bringusersettings ----------------------------------
+export async function getUserSettings(): Promise<GetUserSettingsResponse> {
+  try {
+    const response = await axios.get(`https://api.getbring.com/rest/v2/bringusersettings/${userUUID}`, OPTIONS);
+    return response?.data;
+  } catch (error) {
+    throw new Error(`Error while fetching settings: \n ${error}`);
+  }
+}
+
+// export async function memoizedGetUserSettings(): Promise<GetUserSettingsResponse[]> {
+//   try {
+//     const response = await axios.get(`https://api.getbring.com/rest/v2/bringusersettings/${userUUID}`, OPTIONS);
+//     // const settings = response.data.listUuid;
+//     // const settings = response?.data?.userlistsettings.map((list: any) => {
+//     //   return {
+//     //     listUuid: list.listUuid,
+//     //     usersettings: list.usersettings.map((setting: any) => {
+//     //       return {
+//     //         key: setting.key,
+//     //         value: setting.value,
+//     //       };
+//     //     }),
+//     //     };
+//     // }) || [];
+//     return response?.data;
+//   } catch (error) {
+//     throw new Error(`Error while fetching settings: \n ${error}`);
+//   }
+// }
+
+// export const memoizedGetUserSettings = (() => {
+//   let cache: BringUserSettings[] | null = null;
+
+//   return async (): Promise<BringUserSettings[]> => {
+//     if (cache) {
+//       return cache;
+//     }
+
+//     try {
+//       const response = await axios.get(`https://api.getbring.com/rest/v2/bringusersettings/${userUUID}`, OPTIONS);
+//       const settings = response?.data?.userlistsettings || [];
+//       cache = settings;
+//       return settings;
+//     } catch (error) {
+//       throw new Error(`Error while fetching settings: \n ${error}`);
+//     }
+//   };
+// })();
 
 // ---------------------------------- get user's lists ----------------------------------
 export async function getLists(): Promise<[bringList[], boolean]> {
@@ -108,5 +160,17 @@ export async function updateItem(itemName: string, itemRecently: string, listUUI
       title: `Error while updating "${itemName || itemRecently}"`,
       message: String(error),
     });
+  }
+}
+
+// ---------------------------------- get local translations ----------------------------------
+export async function getArticles(locale: string): Promise<{}> {
+  try {
+    const response = await axios.get(`https://web.getbring.com/locale/articles.${locale}.json`, OPTIONS);
+    // const lists = response?.data;
+    // return lists;
+    return response?.data;
+  } catch (error) {
+    throw new Error(`Error while fetching translation: \n ${error}`);
   }
 }

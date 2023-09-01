@@ -1,40 +1,78 @@
-import { ActionPanel, List, Action, Icon, Color, Toast, showToast, confirmAlert } from "@raycast/api";
-import { getLists, getItems, updateItem } from "./hooks/bringAPI";
+import { ActionPanel, List, Action, Icon, Color, Toast, showToast, confirmAlert, Cache} from "@raycast/api";
+import { getLists, getItems, updateItem, getUserSettings, getArticles} from "./hooks/bringAPI";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 
 import { bringList } from "./types/lists";
 import { PurchaseItem } from "./types/items";
+import { GetUserSettingsResponse, UserListSettings, UserSettings } from "./types/bringusersettings";
 
 function capitalizeFirstLetter(str: string): string {
   return str.replace(/^\w/, (c) => c.toUpperCase());
 }
 
-// main function
+// ADD LANGUAGE OF EACH LIST TO LIST OBJECT
+async function addListArticleLanguageToLists(lists: bringList[]) {
+  const response = await getUserSettings();
+
+  for (const list of lists) {
+      const userlistsetting = response.userlistsettings.find(setting => setting.listUuid === list.listUuid);
+      if (userlistsetting) {
+          const listArticleLanguage = userlistsetting.usersettings.find(setting => setting.key === 'listArticleLanguage');
+          if (listArticleLanguage) {
+              list.listArticleLanguage = listArticleLanguage.value;
+          }
+      }
+  }
+}
+
+// FETCH TRANSLATION and store by using useMemo
+async function getTranslation(list: bringList[]) {
+  const translations: Record<string, any> = {};
+
+  for (const entry of list) {
+    const language = entry.listArticleLanguage;
+    if (language) {
+      const articlesData = await getArticles(language);
+      translations[entry.listUuid] = articlesData;
+    }
+  }
+  return translations;
+};
+
+// ---------------------------- MAIN -----------------------------
 export default function Command() {
   const [searchText, setSearchText] = useState<string>("");
   const [selectedList, setSelectedList] = useState<string>("");
 
-  const onListTypeChange = useCallback((selectedListUUID: string) => {
-    if (selectedListUUID) {
+  function onListTypeChange(selectedListUUID: string) {
       setSelectedList(selectedListUUID);
-    }
-  }, []);
+  }
   
+  // FETCH LISTS
   const [lists, setLists] = useState<bringList[]>([]);
   const [loadingList, setLoadingList] = useState<boolean>(true);
+  const [translation, setTranslation] = useState<Record<string, any>>({}); // STORE TRANSLATION IN STATE
   useEffect(() => {
     async function fetchLists() {
       setLoadingList(true);
       const [fetchlists, fetchloadingList] = await getLists();
       setLists(fetchlists);
-      setLoadingList(fetchloadingList);
       setSelectedList(lists.length > 0 ? lists[0].listUuid : "");
+      
+      await addListArticleLanguageToLists(fetchlists); // LOOKUP UUIDS IN USER SETTINGS AND ADD LANGUAGE TO LIST OBJECT
+      const translationData = await getTranslation(fetchlists); // FETCH TRANSLATION AND STORE IN STATE
+      setTranslation(translationData);
+      
+      setLoadingList(fetchloadingList);
     }
-    
+
     fetchLists();
   }, []);
+  
+  const memoizedTranslation = useMemo(() => translation, [translation]); // STORE TRANSLATION IN MEMOIZED STATE
 
+  // FETCH ITEMS
   const [items, setItems] = useState<PurchaseItem[]>([]);
   const [loadingItems, setLoadingItems] = useState<boolean>(true);
   useEffect(() => {
@@ -57,9 +95,9 @@ export default function Command() {
       filtering={true}
       searchBarPlaceholder="Search or create item"
       searchBarAccessory={
-        <List.Dropdown tooltip="Select list" storeValue={true} onChange={onListTypeChange} isLoading={loadingItems}>
+        <List.Dropdown tooltip="Select list" storeValue={true} onChange={onListTypeChange} isLoading={loadingList}>
           {lists.map((list) => (
-            <List.Dropdown.Item key={list.listUuid} title={list.name} value={list.listUuid} icon={Icon.Receipt} />
+            <List.Dropdown.Item key={list.listUuid} title={list.name + list.listArticleLanguage} value={list.listUuid} icon={Icon.Receipt} />
           ))}
         </List.Dropdown>
       }
@@ -67,11 +105,11 @@ export default function Command() {
       <List.Section title="Shopping List">
         {items
           .sort((a, b) => a.name.localeCompare(b.name))
-          .map((items) => (
+          .map((item) => (
             <List.Item
-              key={items.name}
-              title={items.name}
-              subtitle={items.specification}
+              key={item.name}
+              title={item.name}
+              subtitle={item.specification}
               actions={
                 <ActionPanel>
                   <Action
@@ -79,7 +117,7 @@ export default function Command() {
                     icon={Icon.XMarkCircle}
                     style={Action.Style.Destructive}
                     onAction={() => {
-                      updateItem("", items.name, selectedList);
+                      updateItem("", item.name, selectedList);
                     }}
                   />
                 </ActionPanel>
