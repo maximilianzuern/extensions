@@ -22,7 +22,7 @@
   "preferences": [
     {
       "name": "personalAccessToken",
-      "title": "Personal Access Token",
+      "title": "Access Token",
       "placeholder": "Look it up on https://web.getbring.com/",
       "description": "See the extension's README for instructions to obtain the personal access token",
       "type": "textfield",
