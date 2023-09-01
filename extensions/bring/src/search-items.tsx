@@ -1,5 +1,5 @@
-import { ActionPanel, List, Action, Icon, Color, Toast, showToast, confirmAlert, Cache} from "@raycast/api";
-import { getLists, getItems, updateItem, getUserSettings, getArticles} from "./hooks/bringAPI";
+import { ActionPanel, List, Action, Icon, Color, Toast, showToast, confirmAlert, Cache } from "@raycast/api";
+import { getLists, getItems, updateItem, getUserSettings, getArticles } from "./hooks/bringAPI";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 
@@ -16,13 +16,13 @@ async function addListArticleLanguageToLists(lists: bringList[]) {
   const response = await getUserSettings();
 
   for (const list of lists) {
-      const userlistsetting = response.userlistsettings.find(setting => setting.listUuid === list.listUuid);
-      if (userlistsetting) {
-          const listArticleLanguage = userlistsetting.usersettings.find(setting => setting.key === 'listArticleLanguage');
-          if (listArticleLanguage) {
-              list.listArticleLanguage = listArticleLanguage.value;
-          }
+    const userlistsetting = response.userlistsettings.find((setting) => setting.listUuid === list.listUuid);
+    if (userlistsetting) {
+      const listArticleLanguage = userlistsetting.usersettings.find((setting) => setting.key === "listArticleLanguage");
+      if (listArticleLanguage) {
+        list.listArticleLanguage = listArticleLanguage.value;
       }
+    }
   }
 }
 
@@ -38,7 +38,7 @@ async function getTranslation(list: bringList[]) {
     }
   }
   return translations;
-};
+}
 
 // ---------------------------- MAIN -----------------------------
 export default function Command() {
@@ -46,9 +46,25 @@ export default function Command() {
   const [selectedList, setSelectedList] = useState<string>("");
 
   function onListTypeChange(selectedListUUID: string) {
-      setSelectedList(selectedListUUID);
+    setSelectedList(selectedListUUID);
   }
-  
+
+  // Translate item before updating
+  function updateItemBeforeTranslation(purchase: string, recently: string, listUuid: string) {
+    let translatedPurchase = purchase ?? "";
+    let translatedRecently = recently ?? "";
+    if (memoizedTranslation.hasOwnProperty(listUuid)) {
+      const translation = memoizedTranslation[listUuid];
+      if (recently.length > 0 && Object.values(translation).includes(recently)) {
+        translatedRecently = Object.keys(translation).find(key => translation[key] === recently) ?? "";
+      }
+      if (purchase.length > 0 && Object.values(translation).includes(purchase)) {
+        translatedPurchase = Object.keys(translation).find(key => translation[key] === purchase) ?? "";
+      }
+    }
+    updateItem(translatedPurchase, translatedRecently, listUuid);
+  }
+
   // FETCH LISTS
   const [lists, setLists] = useState<bringList[]>([]);
   const [loadingList, setLoadingList] = useState<boolean>(true);
@@ -59,17 +75,17 @@ export default function Command() {
       const [fetchlists, fetchloadingList] = await getLists();
       setLists(fetchlists);
       setSelectedList(lists.length > 0 ? lists[0].listUuid : "");
-      
+
       await addListArticleLanguageToLists(fetchlists); // LOOKUP UUIDS IN USER SETTINGS AND ADD LANGUAGE TO LIST OBJECT
       const translationData = await getTranslation(fetchlists); // FETCH TRANSLATION AND STORE IN STATE
       setTranslation(translationData);
-      
+
       setLoadingList(fetchloadingList);
     }
 
     fetchLists();
   }, []);
-  
+
   const memoizedTranslation = useMemo(() => translation, [translation]); // STORE TRANSLATION IN MEMOIZED STATE
 
   // FETCH ITEMS
@@ -80,12 +96,22 @@ export default function Command() {
       if (selectedList) {
         setLoadingItems(true);
         const [fetchitems, fetchloadingItems] = await getItems(selectedList);
-        setItems(fetchitems);
+        const translatedItems = fetchitems.map((item) => {
+          if (
+            memoizedTranslation.hasOwnProperty(selectedList) &&
+            memoizedTranslation[selectedList].hasOwnProperty(item.name)
+          ) {
+            return { ...item, name: memoizedTranslation[selectedList][item.name] };
+          } else {
+            return item;
+          }
+        });
+        setItems(translatedItems);
         setLoadingItems(fetchloadingItems);
       }
     }
     fetchItems(selectedList);
-  }, [selectedList]);
+  }, [selectedList, memoizedTranslation]);
 
   return (
     <List
@@ -97,34 +123,38 @@ export default function Command() {
       searchBarAccessory={
         <List.Dropdown tooltip="Select list" storeValue={true} onChange={onListTypeChange} isLoading={loadingList}>
           {lists.map((list) => (
-            <List.Dropdown.Item key={list.listUuid} title={list.name + list.listArticleLanguage} value={list.listUuid} icon={Icon.Receipt} />
+            <List.Dropdown.Item key={list.listUuid} title={list.name} value={list.listUuid} icon={Icon.Receipt} />
           ))}
         </List.Dropdown>
       }
     >
-      <List.Section title="Shopping List">
-        {items
-          .sort((a, b) => a.name.localeCompare(b.name))
-          .map((item) => (
-            <List.Item
-              key={item.name}
-              title={item.name}
-              subtitle={item.specification}
-              actions={
-                <ActionPanel>
-                  <Action
-                    title="Delete Item"
-                    icon={Icon.XMarkCircle}
-                    style={Action.Style.Destructive}
-                    onAction={() => {
-                      updateItem("", item.name, selectedList);
-                    }}
-                  />
-                </ActionPanel>
-              }
-            />
-          ))}
-      </List.Section>
+      {loadingItems || loadingList === true ? (
+        <List.EmptyView />
+      ) : (
+        <List.Section title="Shopping List">
+          {items
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((item) => (
+              <List.Item
+                key={item.name}
+                title={item.name}
+                subtitle={item.specification}
+                actions={
+                  <ActionPanel>
+                    <Action
+                      title="Delete Item"
+                      icon={Icon.XMarkCircle}
+                      style={Action.Style.Destructive}
+                      onAction={() => {
+                        updateItemBeforeTranslation("", item.name, selectedList);
+                      }}
+                    />
+                  </ActionPanel>
+                }
+              />
+            ))}
+        </List.Section>
+      )}
       {searchText.length > 0 && (
         <List.Section title="Add Item">
           <List.Item
@@ -137,7 +167,7 @@ export default function Command() {
                   title="Add Item"
                   icon={Icon.PlusCircle}
                   onAction={() => {
-                    updateItem(capitalizeFirstLetter(searchText), "", selectedList);
+                    updateItemBeforeTranslation(capitalizeFirstLetter(searchText), "", selectedList);
                   }}
                 />
               </ActionPanel>
