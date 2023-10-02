@@ -1,8 +1,9 @@
 import { getPreferenceValues, Toast, showToast } from "@raycast/api";
+import { useFetch } from "@raycast/utils";
 
 import axios from "axios";
 
-import { bringList } from "../types/lists";
+import { ListsResponse, bringList } from "../types/lists";
 import { PurchaseItem } from "../types/items";
 import { GetUserSettingsResponse } from "../types/bringusersettings";
 
@@ -46,6 +47,24 @@ export async function getLists(): Promise<[bringList[], boolean]> {
     throw new Error(`Error while fetching lists: \n ${error}`);
   }
 }
+
+// export function getLists(): Promise<[bringList[], boolean, any]> {
+//   const { isLoading, data, error, revalidate } = useFetch<ListsResponse>(
+//     `https://api.getbring.com/rest/v2/bringusers/${userUUID}/lists`,
+//     {
+//       method: "GET",
+//       ...OPTIONS,
+//       keepPreviousData: true,
+//     }
+//   );
+//   const lists = data?.lists || [];
+
+//   // if (error) {
+//   //   console.error(`Error while fetching list: \n ${error}`);
+//   // }
+
+//   return [lists, isLoading, revalidate];
+// }
 
 // ---------------------------------- get items from a list ----------------------------------
 export async function getItems(listUUID: string): Promise<[PurchaseItem[], boolean]> {
