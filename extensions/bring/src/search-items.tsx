@@ -1,4 +1,4 @@
-import { ActionPanel, List, Action, Icon, Color, Toast, showToast, confirmAlert, Cache } from "@raycast/api";
+import { ActionPanel, List, Action, Icon, Color, Toast, showToast, confirmAlert, Cache, Image } from "@raycast/api";
 import { getLists, getItems, updateItem, getUserSettings, getArticles } from "./hooks/bringAPI";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -112,28 +112,38 @@ export default function Command() {
     fetchItems(selectedList);
   }, [selectedList, memoizedTranslation]);
 
+  function getIconSource(itemName: string): string {
+    if (memoizedTranslation && memoizedTranslation[selectedList]) {
+      const keys = Object.keys(memoizedTranslation[selectedList]);
+      const key = keys.find((key) => memoizedTranslation[selectedList][key] === itemName);
+      if (key) {
+        return `../assets/img/${key}.png`;
+      }
+    }
+    return `../assets/AZ/${itemName.slice(0,1)}.png`;
+  }
+
   return (
     <List
       isLoading={loadingItems || loadingList}
+      searchBarPlaceholder="Search or create item"
+      filtering={true}
       searchText={searchText}
       onSearchTextChange={setSearchText}
-      filtering={true}
-      searchBarPlaceholder="Search or create item"
       searchBarAccessory={
         <List.Dropdown tooltip="Select list" storeValue={true} onChange={onListTypeChange} isLoading={loadingList}>
           {lists.map((list) => (
-            <List.Dropdown.Item
-              icon={Icon.Receipt}
-              key={list.listUuid}
-              value={list.listUuid}
-              title={list.name}
-            />
+            <List.Dropdown.Item icon={Icon.Receipt} key={list.listUuid} value={list.listUuid} title={list.name} />
           ))}
         </List.Dropdown>
       }
     >
-      {loadingItems || loadingList === true ? (
-        <List.EmptyView />
+      {items.length === 0 ? (
+        <List.EmptyView
+          title="Enter first articles!"
+          description="You don't have any articles in your shopping list yet."
+          icon={{ source: "../assets/bring_empty.png", mask: Image.Mask.RoundedRectangle }}
+        />
       ) : (
         <List.Section title="Shopping List">
           {items
@@ -143,6 +153,10 @@ export default function Command() {
                 key={item.name}
                 title={item.name}
                 subtitle={item.specification}
+                icon = {{
+                  source: getIconSource(item.name),
+                  mask: Image.Mask.RoundedRectangle,
+                }}
                 actions={
                   <ActionPanel>
                     <Action
