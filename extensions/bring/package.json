@@ -21,19 +21,18 @@
   ],
   "preferences": [
     {
-      "name": "personalAccessToken",
-      "title": "Access Token",
-      "placeholder": "Look it up on https://web.getbring.com/",
+      "name": "userMail",
+      "title": "User Mail",
       "description": "See the extension's README for instructions to obtain the personal access token",
       "type": "textfield",
-      "required": true
+      "required": false
     },
     {
-      "name": "userUUID",
-      "title": "User UUID",
+      "name": "userPassword",
+      "title": "User Password",
       "description": "See the extension's README for instructions to obtain the userUUID",
-      "type": "textfield",
-      "required": true
+      "type": "password",
+      "required": false
     }
   ],
   "dependencies": {

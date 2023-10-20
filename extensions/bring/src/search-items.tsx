@@ -1,5 +1,5 @@
-import { ActionPanel, List, Action, Icon, Color, Toast, showToast, confirmAlert, Cache, Image } from "@raycast/api";
-import { getLists, getItems, updateItem, getUserSettings, getArticles } from "./hooks/bringAPI";
+import { ActionPanel, List, Action, Icon, Color, Image, LocalStorage } from "@raycast/api";
+import { getLists, getItems, updateItem, getUserSettings, getArticles, getUserAccess } from "./hooks/bringAPI";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 
@@ -26,7 +26,7 @@ async function addListArticleLanguageToLists(lists: bringList[]) {
   }
 }
 
-// FETCH TRANSLATION and store by using useMemo
+// FETCH TRANSLATION
 async function getTranslation(list: bringList[]) {
   const translations: Record<string, any> = {};
 
@@ -49,7 +49,7 @@ export default function Command() {
   }
 
   // Translate item before updating
-  function updateItemBeforeTranslation(purchase: string, recently: string, listUuid: string) {
+  async function updateItemBeforeTranslation(purchase: string, recently: string, listUuid: string) {
     let translatedPurchase = purchase ?? "";
     let translatedRecently = recently ?? "";
     if (memoizedTranslation.hasOwnProperty(listUuid)) {
@@ -61,7 +61,21 @@ export default function Command() {
         translatedPurchase = Object.keys(translation).find((key) => translation[key] === purchase) ?? "";
       }
     }
-    updateItem(translatedPurchase, translatedRecently, listUuid);
+
+    const success = await updateItem(translatedPurchase, translatedRecently, listUuid);
+
+    if (success) {
+      setSearchText("");
+      // MUTATE ITEMS
+      if (purchase.length > 0) {
+        const newItem = { specification: "", name: purchase };
+        setItems([...items, newItem]);
+      }
+      if (recently.length > 0) {
+        const newItems = items.filter((item) => item.name !== recently);
+        setItems(newItems);
+      }
+    }
   }
 
   // FETCH LISTS
@@ -71,6 +85,7 @@ export default function Command() {
   useEffect(() => {
     async function fetchLists() {
       setLoadingList(true);
+      await getUserAccess(); // FETCH ACCESS TOKEN
       const [fetchlists, fetchloadingList] = await getLists();
       setLists(fetchlists);
       setSelectedList(lists.length > 0 ? lists[0].listUuid : "");
@@ -80,12 +95,50 @@ export default function Command() {
       setTranslation(translationData);
 
       setLoadingList(fetchloadingList);
+
+      //----------------------
+      // const changes = await LocalStorage.getItem(lists[0].listUuid);
+      // if (changes === undefined) {
+      //   await LocalStorage.setItem(Object.keys(translation)[1], translation[lists[1].listUuid]);
+      //   console.log("setNewTranslation");
+      // }
+      //----------------------
     }
 
     fetchLists();
   }, []);
 
   const memoizedTranslation = useMemo(() => translation, [translation]); // STORE TRANSLATION IN MEMOIZED STATE
+
+  //----------------------
+  // useEffect(() => {
+  //   async function getFavoriteFruit() {
+  //   const changes = await LocalStorage.getItem(Object.keys(translation)[1]);
+  //   if (changes === undefined) {
+  //     await LocalStorage.setItem(String(Object.keys(translation)[1]), translation[Object.keys(translation)[1]]);
+  //   const item = await LocalStorage.getItem<string>(Object.keys(translation)[1]);
+  //     // const item = await LocalStorage.allItems<Record<string, string>>();
+  //   // return item;
+  //     console.log(item);
+  //   }
+  // }
+  // getFavoriteFruit();
+  // }, [translation]);
+
+  // getFavoriteFruit()//.then((item) => console.log(item));
+  // console.log(Object.entries(getFavoriteFruit()));
+
+  // (async () => {
+  //   const item = await LocalStorage.allItems;
+  //   console.log(item.length);
+  // })();
+
+  // console.info(Object.keys(memoizedTranslation).length > 0 ? memoizedTranslation[selectedList] : "");
+  // console.info(Object.keys(memoizedTranslation).length > 0 ? memoizedTranslation : "");
+
+  // console.log(Object.keys(translation).length > 0 ? Object.keys(translation)[1] : "");
+  // console.log(Object.keys(translation).length > 0 ? translation[lists[1].listUuid] : ""); //VALUE
+  //----------------------
 
   // FETCH ITEMS
   const [items, setItems] = useState<PurchaseItem[]>([]);
@@ -112,6 +165,7 @@ export default function Command() {
     fetchItems(selectedList);
   }, [selectedList, memoizedTranslation]);
 
+  // GET ICON FOR ITEM
   function getIconSource(itemName: string): string {
     if (memoizedTranslation && memoizedTranslation[selectedList]) {
       const keys = Object.keys(memoizedTranslation[selectedList]);
@@ -120,7 +174,7 @@ export default function Command() {
         return `../assets/img/${key}.png`;
       }
     }
-    return `../assets/AZ/${itemName.slice(0,1)}.png`;
+    return `../assets/AZ/${itemName.slice(0, 1)}.png`;
   }
 
   return (
@@ -153,7 +207,8 @@ export default function Command() {
                 key={item.name}
                 title={item.name}
                 subtitle={item.specification}
-                icon = {{
+                // subtitle={memoizedTranslation?.[selectedList] ?  Object.keys(memoizedTranslation[selectedList]).find((key) => memoizedTranslation[selectedList][key] === item.name) : ""}
+                icon={{
                   source: getIconSource(item.name),
                   mask: Image.Mask.RoundedRectangle,
                 }}
