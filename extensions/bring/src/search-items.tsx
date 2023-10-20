@@ -1,4 +1,4 @@
-import { ActionPanel, List, Action, Icon, Color, Image, LocalStorage } from "@raycast/api";
+import { ActionPanel, List, Action, Icon, Color, Image, LocalStorage, environment } from "@raycast/api";
 import { getLists, getItems, updateItem, getUserSettings, getArticles, getUserAccess } from "./hooks/bringAPI";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -211,6 +211,7 @@ export default function Command() {
                 icon={{
                   source: getIconSource(item.name),
                   mask: Image.Mask.RoundedRectangle,
+                  tintColor: environment.appearance === 'light' ? Color.PrimaryText: "",
                 }}
                 actions={
                   <ActionPanel>
