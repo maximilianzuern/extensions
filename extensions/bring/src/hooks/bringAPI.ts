@@ -56,8 +56,14 @@ export async function getLists(): Promise<[bringList[], boolean]> {
     const response = await axios.get(`https://api.getbring.com/rest/v2/bringusers/${userUUID}/lists`, { headers });
     const lists = response?.data?.lists || [];
     return [lists, false];
-  } catch (error) {
-    throw new Error(`Error while fetching lists: \n ${error}`);
+  } catch (error: any) {
+    if (error && error.status === 401 || error.status === 403) {
+      await LocalStorage.clear();
+      getUserAccess();
+    } else {
+      throw new Error(`Error while fetching lists: \n ${error}`);
+    }
+    return [[], false];
   }
 }
 
